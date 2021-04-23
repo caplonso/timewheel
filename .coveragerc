@@ -1,0 +1,7 @@
+[run]
+source = timewheel/
+
+omit = timewheel/main.py
+
+[report]
+precision = 2

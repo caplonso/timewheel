@@ -188,9 +188,3 @@ def parse_nth_token(nth_token: str,
 
     return([value for value in range(start_value, max_value + 1)
             if value % nth == 0])
-
-
-if __name__ == '__main__':
-    sc = Schedule('mimde', '*/10,17 12 * * 1', print)
-    dt = datetime.strptime("2021-04-27 12:17:00", "%Y-%m-%d %H:%M:%S")
-    print(sc.schedule_table.should_run(dt))

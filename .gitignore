@@ -3,7 +3,10 @@ __pycache__/
 build/
 dist/
 timewheel.egg-info/
+.pytest_cache/
+htmlcov/
 
 main.py
+.coverage
 *.pyc
 *.pyo

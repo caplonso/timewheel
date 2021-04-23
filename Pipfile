@@ -9,6 +9,9 @@ pydantic = "*"
 [dev-packages]
 radon = "*"
 pylint = "*"
+coverage = "*"
+pytest = "*"
+pytest-asyncio = "*"
 
 [requires]
 python_version = "3.9"
