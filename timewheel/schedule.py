@@ -97,7 +97,7 @@ class Schedule:
                     asyncio.get_running_loop().run_in_executor(None, self.job),
                     return_exceptions=True
                 )
-            if result:
+            if result and result[0] is not None:
                 logger.error(f"[{self.name}]: An unexpected error occurred "
                              f"while running the job {self.job}. Details: "
                              f"{result}")
