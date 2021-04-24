@@ -20,7 +20,8 @@ class TimeWheel:
         self.running = True
         for sig in SIGNALS:
             asyncio.get_running_loop().add_signal_handler(getattr(signal, sig),
-                                                          partial(asyncio.create_task, self.kill_jobs()))
+                                                          partial(asyncio.create_task,
+                                                                  self.kill_jobs()))
 
     async def run(self):
         """
@@ -39,7 +40,7 @@ class TimeWheel:
                     asyncio.create_task(schedule.run(now))
             await asyncio.sleep(SLEEP_TIME)
             timer += SLEEP_TIME
-        logger.warning(f"Finished the timewheel loop!")
+        logger.warning("Finished the timewheel loop!")
 
     async def kill_jobs(self):
         """

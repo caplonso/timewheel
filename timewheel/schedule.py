@@ -56,12 +56,14 @@ class Schedule:
         :param job: An awaitable object.
         """
         self.name = name
-        self.schedule_table = self._create_schedules(expression)
+        self.schedule_table = create_schedules(expression)
         self.job = job
         self.running = False
         self.stop_signal_received = False
 
-        logger.info(f"[{self.name}]: Created scheduler for the expression {expression} and job {job}")
+        logger.info(f"[{self.name}]: Created scheduler for the expression "
+                    f"{expression} and job {job}")
+
         logger.debug(f"[{self.name}]: Schedule table data: {self.schedule_table}")
 
     async def run(self,
@@ -70,6 +72,11 @@ class Schedule:
         Checks if the action should be run in the current timestamp.
         If the scheduler received the signal to finish, than the
         execution is ignored.
+
+        Important: The Callable should never return any value or
+        the execution will be marked as error.
+
+
         :param current_time: Datetime from the main loop
         :return: None
         """
@@ -83,9 +90,17 @@ class Schedule:
             self.running = True
             logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
             if asyncio.iscoroutinefunction(self.job):
-                await self.job()
+                result = await asyncio.gather(self.job(),
+                                              return_exceptions=True)
             else:
-                await asyncio.get_running_loop().run_in_executor(None, self.job)
+                result = await asyncio.gather(
+                    asyncio.get_running_loop().run_in_executor(None, self.job),
+                    return_exceptions=True
+                )
+            if result:
+                logger.error(f"[{self.name}]: An unexpected error occurred "
+                             f"while running the job {self.job}. Details: "
+                             f"{result}")
             self.running = False
 
     async def finish(self):
@@ -100,38 +115,39 @@ class Schedule:
         while self.running:
             await asyncio.sleep(0.5)
 
-    def _create_schedules(self, expression: str) -> ScheduleTable:
-        """
-        Convert a cron expression into a list of datetimes
 
-        The expression structure is the following:
+def create_schedules(expression: str) -> ScheduleTable:
+    """
+    Convert a cron expression into a list of datetimes
 
-         ┌───────────── minute (0 - 59)
-         │ ┌───────────── hour (0 - 23)
-         │ │ ┌───────────── day of the month (1 - 31)
-         │ │ │ ┌───────────── month (1 - 12)
-         │ │ │ │ ┌───────────── day of the week (0 - 6)
-         │ │ │ │ │
-         * * * * *
+    The expression structure is the following:
 
-        :param expression: String containing the cron expression
-        :return:
-        """
-        if not re.fullmatch(EXPRESSION_VALIDATOR_REGEXP, expression):
-            raise ValueError(f"The expression must match the pattern "
-                             f"'{EXPRESSION_VALIDATOR_REGEXP.pattern}'")
+     ┌───────────── minute (0 - 59)
+     │ ┌───────────── hour (0 - 23)
+     │ │ ┌───────────── day of the month (1 - 31)
+     │ │ │ ┌───────────── month (1 - 12)
+     │ │ │ │ ┌───────────── day of the week (0 - 6)
+     │ │ │ │ │
+     * * * * *
 
-        tokens = expression.split(EXPRESSION_SEPARATOR)
-        try:
-            return ScheduleTable(minutes=parse_expression_token(tokens[0], 0, 59),
-                                 hours=parse_expression_token(tokens[1], 0, 23),
-                                 days=parse_expression_token(tokens[2], 1, 31),
-                                 months=parse_expression_token(tokens[3], 1, 12),
-                                 weekdays=parse_expression_token(tokens[4], 0, 6))
+    :param expression: String containing the cron expression
+    :return:
+    """
+    if not re.fullmatch(EXPRESSION_VALIDATOR_REGEXP, expression):
+        raise ValueError(f"The expression must match the pattern "
+                         f"'{EXPRESSION_VALIDATOR_REGEXP.pattern}'")
 
-        except ValueError as error:
-            raise ValueError(f"The expression {expression} contains an "
-                             f"invalid token. Details: {''.join(error.args)}") from error
+    tokens = expression.split(EXPRESSION_SEPARATOR)
+    try:
+        return ScheduleTable(minutes=parse_expression_token(tokens[0], 0, 59),
+                             hours=parse_expression_token(tokens[1], 0, 23),
+                             days=parse_expression_token(tokens[2], 1, 31),
+                             months=parse_expression_token(tokens[3], 1, 12),
+                             weekdays=parse_expression_token(tokens[4], 0, 6))
+
+    except ValueError as error:
+        raise ValueError(f"The expression {expression} contains an "
+                         f"invalid token. Details: {''.join(error.args)}") from error
 
 
 def parse_expression_token(token: str,

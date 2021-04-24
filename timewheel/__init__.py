@@ -1,1 +1,1 @@
-from timewheel.wheel import TimeWheel as TimeWheel
+from timewheel.wheel import TimeWheel
