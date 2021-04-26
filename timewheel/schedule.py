@@ -1,4 +1,5 @@
 import re
+import time
 import asyncio
 import logging
 from datetime import datetime
@@ -85,9 +86,11 @@ class Schedule:
         if self.stop_signal_received:
             return
 
-        if self.schedule_table.should_run(current_time) and \
-                not self.running:
+        if self.schedule_table.should_run(current_time):
+
             self.running = True
+            succeeded = True
+            start = time.time()
             logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
             if asyncio.iscoroutinefunction(self.job):
                 result = await asyncio.gather(self.job(),
@@ -98,9 +101,11 @@ class Schedule:
                     return_exceptions=True
                 )
             if result and result[0] is not None:
+                succeeded = False
                 logger.error(f"[{self.name}]: An unexpected error occurred "
                              f"while running the job {self.job}. Details: "
                              f"{result}")
+            logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
             self.running = False
 
     async def finish(self):
@@ -118,7 +123,7 @@ class Schedule:
 
 def create_schedules(expression: str) -> ScheduleTable:
     """
-    Convert a cron expression into a list of datetimes
+    Convert a cron expression into a ScheduleTable.
 
     The expression structure is the following:
 
@@ -174,12 +179,15 @@ def parse_expression_token(token: str,
         if extracted_token == ALL_TOKEN:
             return True
         if NTH_TOKEN in extracted_token:
-            generated_tokens.extend(parse_nth_token(extracted_token, start_value, max_value))
+            generated_tokens.extend(parse_nth_token(extracted_token,
+                                                    start_value,
+                                                    max_value))
         else:
             extracted_token = int(extracted_token)
             if extracted_token > max_value:
-                raise ValueError(f"The token value {extracted_token} is higher then the "
-                                 f"max value ({max_value}) for the field type.")
+                raise ValueError(f"The token value {extracted_token} is higher "
+                                 f"then the max value ({max_value}) for the "
+                                 f"field type.")
             generated_tokens.append(extracted_token)
 
     return sorted(generated_tokens)
@@ -195,7 +203,8 @@ def parse_nth_token(nth_token: str,
     :param nth_token: nth expression. E.g: */2
     :param start_value: Initial value for the interval
     :param max_value: Max value for the interval
-    :return: A list containing all values which the mod from the right value is zero
+    :return: A list containing all values which the
+        mod from the right value is zero
     """
     nth = int(nth_token.split(NTH_TOKEN)[1])
     if nth > max_value:

@@ -18,6 +18,8 @@ class TimeWheel:
     def __init__(self, schedules: List[Schedule]):
         self.schedules = schedules
         self.running = True
+
+        # Setup de signal handler method
         for sig in SIGNALS:
             asyncio.get_running_loop().add_signal_handler(getattr(signal, sig),
                                                           partial(asyncio.create_task,
@@ -37,7 +39,8 @@ class TimeWheel:
                 timer = 0
                 now = datetime.now()
                 for schedule in self.schedules:
-                    asyncio.create_task(schedule.run(now))
+                    if not schedule.running:
+                        asyncio.create_task(schedule.run(now))
             await asyncio.sleep(SLEEP_TIME)
             timer += SLEEP_TIME
         logger.warning("Finished the timewheel loop!")
@@ -48,6 +51,7 @@ class TimeWheel:
             invokes the finish methods for all schedules in order to
             wait them finish the jobs if there are any running.
         """
+
         logger.warning("Received system signal to finish!")
         for schedule in self.schedules:
             logger.debug(f"Waiting for the schedule {schedule.name} to finish...")

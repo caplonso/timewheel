@@ -1,3 +1,9 @@
+## v.0.0.4 - 2021-04-25
+
+**Fixed**
+
+ - Now the schedule only runs if already finished the last execution.
+
 ## v0.0.3 - 2021-04-24
 
 **Changed**
