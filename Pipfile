@@ -12,6 +12,7 @@ pylint = "*"
 coverage = "*"
 pytest = "*"
 pytest-asyncio = "*"
+twine = "*"
 
 [requires]
 python_version = "3.9"
