@@ -7,6 +7,7 @@ timewheel.egg-info/
 htmlcov/
 
 main.py
+logger.ini
 .coverage
 *.pyc
 *.pyo

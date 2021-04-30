@@ -3,8 +3,10 @@ import time
 import asyncio
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from dataclasses import dataclass
 from typing import Callable, List, Union
+
 
 # This regular expression is used to validate the crontab expression
 # passed to the constructor.
@@ -15,7 +17,7 @@ ALL_TOKEN = "*"
 NTH_TOKEN = "/"
 MULTI_TOKEN = ","
 
-logger = logging.getLogger('timewheel.scheduler')
+
 
 
 @dataclass
@@ -49,39 +51,43 @@ class Schedule:
     def __init__(self,
                  name: str,
                  expression: str,
+                 timezone: str,
                  job: Callable):
         """
         :param name: The schedule name
         :param expression: A crontab expression, for more information
             please check: https://en.wikipedia.org/wiki/Cron
+        :param timezone: Timezone name based on IANA database. Please
+            check: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
         :param job: An awaitable object.
         """
+        self.logger = logging.getLogger('timewheel.scheduler')
         self.name = name
         self.schedule_table = create_schedules(expression)
+        self.timezone = ZoneInfo(timezone)
         self.job = job
         self.running = False
         self.stop_signal_received = False
 
-        logger.info(f"[{self.name}]: Created scheduler for the expression "
-                    f"{expression} and job {job}")
+        self.logger.info(f"[{self.name}]: Created scheduler for the expression "
+                         f"{expression} and job {job} using the timezone {timezone}")
 
-        logger.debug(f"[{self.name}]: Schedule table data: {self.schedule_table}")
+        self.logger.debug(f"[{self.name}]: Schedule table data: {self.schedule_table}")
 
-    async def run(self,
-                  current_time: datetime):
+    async def run(self):
         """
-        Checks if the action should be run in the current timestamp.
+        Checks if the job should be run in the current timestamp
+        for the schedule timezone.
         If the scheduler received the signal to finish, than the
         execution is ignored.
 
         Important: The Callable should never return any value or
         the execution will be marked as error.
 
-
-        :param current_time: Datetime from the main loop
         :return: None
         """
-        logger.debug(f"[{self.name}]: Checking if should run at {current_time}")
+        current_time = datetime.now(tz=self.timezone)
+        self.logger.debug(f"[{self.name}]: Checking if should run at {current_time} using the tz {self.timezone}")
 
         if self.stop_signal_received:
             return
@@ -91,7 +97,7 @@ class Schedule:
             self.running = True
             succeeded = True
             start = time.time()
-            logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
+            self.logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
             if asyncio.iscoroutinefunction(self.job):
                 result = await asyncio.gather(self.job(),
                                               return_exceptions=True)
@@ -102,10 +108,10 @@ class Schedule:
                 )
             if result and result[0] is not None:
                 succeeded = False
-                logger.error(f"[{self.name}]: An unexpected error occurred "
+                self.logger.error(f"[{self.name}]: An unexpected error occurred "
                              f"while running the job {self.job}. Details: "
                              f"{result}")
-            logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
+            self.logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
             self.running = False
 
     async def finish(self):
@@ -114,7 +120,7 @@ class Schedule:
         new executions and waits the instance finish
         the action execution.
         """
-        logger.warning(f"{self.name}: Finish signal received")
+        self.logger.warning(f"{self.name}: Finish signal received")
 
         self.stop_signal_received = True
         while self.running:

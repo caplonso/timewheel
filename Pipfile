@@ -13,6 +13,8 @@ coverage = "*"
 pytest = "*"
 pytest-asyncio = "*"
 twine = "*"
+fastapi = "*"
+uvicorn = "*"
 
 [requires]
 python_version = "3.9"

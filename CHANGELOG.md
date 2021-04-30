@@ -1,3 +1,19 @@
+## v.0.1.0 - 2021-04-29
+
+**Added**
+
+ - Now the `Schedule` class supports timezones.
+
+**Changed**
+
+ - The logger instances has been moved to inside the classes.
+
+## v.0.0.5 - 2021-04-26
+
+**Removed**
+
+ - The signal handlers in order to block the uvicorn loop when working with fastapi.
+
 ## v.0.0.4 - 2021-04-25
 
 **Fixed**
