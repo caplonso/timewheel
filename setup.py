@@ -7,8 +7,8 @@ README = (PATH / "README.md").read_text()
 
 
 setup(
-    name="timewheel",
-    version="0.0.4",
+    name="timewheel-scheduler",
+    version="0.1.0",
     description="Async crontab like scheduler",
     long_description=README,
     long_description_content_type="text/markdown",
