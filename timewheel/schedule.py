@@ -109,8 +109,8 @@ class Schedule:
             if result and result[0] is not None:
                 succeeded = False
                 self.logger.error(f"[{self.name}]: An unexpected error occurred "
-                             f"while running the job {self.job}. Details: "
-                             f"{result}")
+                                  f"while running the job {self.job}. Details: "
+                                  f"{result}")
             self.logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
             self.running = False
 

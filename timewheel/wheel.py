@@ -1,7 +1,6 @@
 import logging
 import asyncio
 from typing import List
-from datetime import datetime
 
 from timewheel.schedule import Schedule
 
@@ -17,7 +16,7 @@ class TimeWheel:
 
     async def run(self):
         """
-        Starts the scheduler loop
+        Starts the scheduler loops
 
         :return:
         """
