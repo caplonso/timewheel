@@ -1,3 +1,4 @@
+import os
 import logging
 import asyncio
 from typing import List
@@ -5,14 +6,20 @@ from typing import List
 from timewheel.schedule import Schedule
 
 SLEEP_TIME = 1
+SCHEDULE_CHECK_INTERVAL = os.getenv('SCHEDULE_CHECK_INTERVAL', '40')
 
 
 class TimeWheel:
 
     def __init__(self, schedules: List[Schedule]):
-        self.logger = logging.getLogger("timewheel")
-        self.schedules = schedules
-        self.running = True
+        try:
+            self.logger = logging.getLogger("timewheel")
+            self.schedules = schedules
+            self.schedule_check_interval = int(SCHEDULE_CHECK_INTERVAL)
+            self.running = True
+        except ValueError:
+            raise ValueError(f"The variable SCHEDULE_CHECK_INTERVAL must be an integer, "
+                             f"received value {SCHEDULE_CHECK_INTERVAL}")
 
     async def run(self):
         """
@@ -22,8 +29,8 @@ class TimeWheel:
         """
         timer = 0
         while self.running:
-            # Only check the schedule every 60 seconds
-            if timer % 60 == 0:
+            # Only check the schedule every SCHEDULE_CHECK_INTERVAL seconds
+            if timer % self.schedule_check_interval == 0:
                 timer = 0
                 for schedule in self.schedules:
                     if not schedule.running:

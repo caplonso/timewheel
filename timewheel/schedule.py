@@ -18,8 +18,6 @@ NTH_TOKEN = "/"
 MULTI_TOKEN = ","
 
 
-
-
 @dataclass
 class ScheduleTable:
     minutes: Union[List[int], bool]

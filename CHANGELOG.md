@@ -1,3 +1,9 @@
+## v.0.1.1 - 2021-12-10
+
+**Changed**
+
+ - Now is possible to set the verification frequency for running tasks using the `SCHEDULE_CHECK_INTERVAL`
+
 ## v.0.1.0 - 2021-04-29
 
 **Added**

@@ -7,7 +7,7 @@ from timewheel.schedule import Schedule, EXPRESSION_VALIDATOR_REGEXP
 # Instance creation tests
 
 def test_create_schedule_running_every_minute():
-    s = Schedule('some-schedule', '* * * * *', print)
+    s = Schedule('some-schedule', '* * * * *', 'America/Sao_Paulo', print)
     assert s.name == 'some-schedule'
     assert s.schedule_table.minutes
     assert s.schedule_table.hours
@@ -17,14 +17,14 @@ def test_create_schedule_running_every_minute():
 
 
 def test_create_schedule_with_nth_expression():
-    s = Schedule('some-schedule', '*/2 * * * *', print)
+    s = Schedule('some-schedule', '*/2 * * * *', 'America/Sao_Paulo', print)
 
     assert isinstance(s.schedule_table.minutes, list)
     assert len(s.schedule_table.minutes) == 30
 
 
 def test_create_schedule_with_multi_tokens():
-    s = Schedule('some-schedule', '1,2,3,4,5 * * * *', print)
+    s = Schedule('some-schedule', '1,2,3,4,5 * * * *', 'America/Sao_Paulo', print)
 
     assert isinstance(s.schedule_table.minutes, list)
     assert len(s.schedule_table.minutes) == 5
@@ -33,7 +33,7 @@ def test_create_schedule_with_multi_tokens():
 def test_create_schedule_with_nth_token_having_value_over_the_max():
     expression = "*/100 * * * *"
     with pytest.raises(ValueError) as error:
-        Schedule('some-schedule', expression, print)
+        Schedule('some-schedule', expression, 'America/Sao_Paulo', print)
 
     assert f"The expression {expression} contains an invalid token. " \
            f"Details: The nth token value 100 is higher then the " \
@@ -43,7 +43,7 @@ def test_create_schedule_with_nth_token_having_value_over_the_max():
 def test_create_schedule_with_token_having_value_over_the_max():
     expression = "100 * * * *"
     with pytest.raises(ValueError) as error:
-        Schedule('some-schedule', expression, print)
+        Schedule('some-schedule', expression, 'America/Sao_Paulo', print)
 
     assert f"The expression {expression} contains an invalid token. " \
            f"Details: The token value 100 is higher then the " \
@@ -54,7 +54,7 @@ def test_create_schedule_with_multi_token_and_all():
     expression = "1,2,3,4,* * * * *"
 
     with pytest.raises(ValueError) as error:
-        Schedule('some-schedule', expression, print)
+        Schedule('some-schedule', expression, 'America/Sao_Paulo', print)
 
     assert f"The expression {expression} contains an invalid token. " \
            f"Details: Invalid syntax for the token 1,2,3,4,*" == str(error.value)
@@ -63,7 +63,7 @@ def test_create_schedule_with_multi_token_and_all():
 def test_create_schedule_with_invalid_expression():
 
     with pytest.raises(ValueError) as error:
-        Schedule('some-schedule', '* * * *', print)
+        Schedule('some-schedule', '* * * *', 'America/Sao_Paulo', print)
 
     assert f"The expression must match the pattern '{EXPRESSION_VALIDATOR_REGEXP.pattern}'" == str(error.value)
 
@@ -72,20 +72,20 @@ def test_create_schedule_with_invalid_expression():
 
 def test_should_run_true():
     current_time = datetime.strptime('2021-10-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-    s = Schedule('my-schedule', '* * * * *', print)
+    s = Schedule('my-schedule', '* * * * *', 'America/Sao_Paulo', print)
     assert s.schedule_table.should_run(current_time)
 
 
 def test_should_run_false():
     current_time = datetime.strptime('2021-10-01 00:05:00', '%Y-%m-%d %H:%M:%S')
-    s = Schedule('my-schedule', '*/7 * * * *', print)
+    s = Schedule('my-schedule', '*/7 * * * *', 'America/Sao_Paulo', print)
 
     assert not s.schedule_table.should_run(current_time)
 
 
 @pytest.mark.asyncio
 async def test_finish_scheduler():
-    s = Schedule('my-schedule', '* * * * *', print)
+    s = Schedule('my-schedule', '* * * * *', 'America/Sao_Paulo', print)
     await s.finish()
     assert s.stop_signal_received
     assert not s.running
@@ -93,11 +93,9 @@ async def test_finish_scheduler():
 
 @pytest.mark.asyncio
 async def test_run_with_stop_signal_received():
-    current_time = datetime.strptime('2021-10-01 00:05:00', '%Y-%m-%d %H:%M:%S')
-
-    s = Schedule('my-schedule', '* * * * *', print)
+    s = Schedule('my-schedule', '* * * * *', 'America/Sao_Paulo', print)
     s.stop_signal_received = True
 
-    r = await s.run(current_time)
+    r = await s.run()
     assert not r
 
