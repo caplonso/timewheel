@@ -1,3 +1,9 @@
+## v.0.1.2 - 2021-12-13
+
+**Added**
+
+ - Additional validation in the `Scheduler` class to prevent duplicated executions.
+
 ## v.0.1.1 - 2021-12-10
 
 **Changed**

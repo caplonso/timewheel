@@ -6,7 +6,7 @@ from typing import List
 from timewheel.schedule import Schedule
 
 SLEEP_TIME = 1
-SCHEDULE_CHECK_INTERVAL = os.getenv('SCHEDULE_CHECK_INTERVAL', '40')
+SCHEDULE_CHECK_INTERVAL = os.getenv('SCHEDULE_CHECK_INTERVAL', '10')
 
 
 class TimeWheel:
@@ -28,6 +28,7 @@ class TimeWheel:
         :return:
         """
         timer = 0
+
         while self.running:
             # Only check the schedule every SCHEDULE_CHECK_INTERVAL seconds
             if timer % self.schedule_check_interval == 0:

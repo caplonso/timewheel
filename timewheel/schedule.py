@@ -65,6 +65,7 @@ class Schedule:
         self.timezone = ZoneInfo(timezone)
         self.job = job
         self.running = False
+        self.last_execution = None
         self.stop_signal_received = False
 
         self.logger.info(f"[{self.name}]: Created scheduler for the expression "
@@ -84,33 +85,34 @@ class Schedule:
 
         :return: None
         """
-        current_time = datetime.now(tz=self.timezone)
+        current_time = datetime.now(tz=self.timezone).replace(second=0, microsecond=0)
         self.logger.debug(f"[{self.name}]: Checking if should run at {current_time} using the tz {self.timezone}")
 
         if self.stop_signal_received:
             return
 
         if self.schedule_table.should_run(current_time):
-
-            self.running = True
-            succeeded = True
-            start = time.time()
-            self.logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
-            if asyncio.iscoroutinefunction(self.job):
-                result = await asyncio.gather(self.job(),
-                                              return_exceptions=True)
-            else:
-                result = await asyncio.gather(
-                    asyncio.get_running_loop().run_in_executor(None, self.job),
-                    return_exceptions=True
-                )
-            if result and result[0] is not None:
-                succeeded = False
-                self.logger.error(f"[{self.name}]: An unexpected error occurred "
-                                  f"while running the job {self.job}. Details: "
-                                  f"{result}")
-            self.logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
-            self.running = False
+            if self.last_execution is None or current_time != self.last_execution:
+                self.last_execution = current_time
+                self.running = True
+                succeeded = True
+                start = time.time()
+                self.logger.info(f"[{self.name}]: Running the schedule with the job {self.job}")
+                if asyncio.iscoroutinefunction(self.job):
+                    result = await asyncio.gather(self.job(),
+                                                  return_exceptions=True)
+                else:
+                    result = await asyncio.gather(
+                        asyncio.get_running_loop().run_in_executor(None, self.job),
+                        return_exceptions=True
+                    )
+                if result and result[0] is not None:
+                    succeeded = False
+                    self.logger.error(f"[{self.name}]: An unexpected error occurred "
+                                      f"while running the job {self.job}. Details: "
+                                      f"{result}")
+                self.logger.info(f"[{self.name}]: Job finished in {time.time() - start} seconds with status {succeeded}.")
+                self.running = False
 
     async def finish(self):
         """
