@@ -8,9 +8,9 @@ Here is a basic example:
 
 ```python
 # Should run as-is
-import time
 import asyncio
 from typing import Any
+from datetime import datetime
 
 from timewheel import TimeWheel
 from timewheel.schedule import Schedule
@@ -25,7 +25,10 @@ async def my_another_job(some_value: Any):
     print(f"Hey! This is my some_value {some_value}")
     await asyncio.sleep(1)
 
-
+    
+def my_special_job():
+    print("Doing the special job!!")
+    
 async def main():
     timewheel = TimeWheel(schedules=[
         # Runs every 29 minutes using America/Sao_Paulo
@@ -39,7 +42,13 @@ async def main():
         Schedule(name="another-schedule", 
                  expression="5,10,20 * * * 2", 
                  timezone="America/Los_Angeles",
-                 job=my_another_job)])
+                 job=my_another_job),
+        Schedule(name="special-job",
+                 expression="* * * * *",
+                 timezone="America/Sao_Paulo",
+                 excluded_dates=[datetime.strptime('2021-12-31', '%Y-%m-%d')],
+                 job=my_special_job)
+    ])
     await timewheel.run()
 
 

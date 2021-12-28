@@ -2,7 +2,7 @@ import re
 import time
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
 from dataclasses import dataclass
 from typing import Callable, List, Union
@@ -50,19 +50,23 @@ class Schedule:
                  name: str,
                  expression: str,
                  timezone: str,
-                 job: Callable):
+                 job: Callable,
+                 excluded_dates: List[date] = None):
         """
         :param name: The schedule name
         :param expression: A crontab expression, for more information
             please check: https://en.wikipedia.org/wiki/Cron
         :param timezone: Timezone name based on IANA database. Please
             check: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-        :param job: An awaitable object.
+        :param excluded_dates: List containing the date which the schedule
+            will not run.
+        :param job: An awaitable object to be run.
         """
         self.logger = logging.getLogger('timewheel.scheduler')
         self.name = name
         self.schedule_table = create_schedules(expression)
         self.timezone = ZoneInfo(timezone)
+        self.excluded_dates = excluded_dates
         self.job = job
         self.running = False
         self.last_execution = None
@@ -92,6 +96,13 @@ class Schedule:
             return
 
         if self.schedule_table.should_run(current_time):
+            # Returns if the current_date is set as excluded
+            if self.excluded_dates is not None and current_time.date() in self.excluded_dates:
+                self.logger.info(f"[{self.name}]: The {self.job} should be executed, but the date "
+                                 f"{current_time.date()} has been added to the exclusion list.")
+                return
+            # This check is used to avoid the execution of a task more then once in
+            # a minute
             if self.last_execution is None or current_time != self.last_execution:
                 self.last_execution = current_time
                 self.running = True

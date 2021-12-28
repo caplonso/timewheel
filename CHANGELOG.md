@@ -1,3 +1,9 @@
+## v.0.2.0 - 2021-12-28
+
+**Added**
+
+ - Now is possible to pass a list of dates which the job will not be executed.
+
 ## v.0.1.2 - 2021-12-13
 
 **Added**
