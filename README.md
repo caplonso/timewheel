@@ -43,10 +43,17 @@ async def main():
                  expression="5,10,20 * * * 2", 
                  timezone="America/Los_Angeles",
                  job=my_another_job),
+        # Runs the special-job every minute except on 2021-12-31
         Schedule(name="special-job",
                  expression="* * * * *",
                  timezone="America/Sao_Paulo",
                  excluded_dates=[datetime.strptime('2021-12-31', '%Y-%m-%d')],
+                 job=my_special_job),
+        # Runs the jobs every minute between monday and friday 
+        # using the range notation
+        Schedule(name='another-job',
+                 expression='* * * * 0-4',
+                 timezone='America/Sao_Paulo',
                  job=my_special_job)
     ])
     await timewheel.run()

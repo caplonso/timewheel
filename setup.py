@@ -8,12 +8,12 @@ README = (PATH / "README.md").read_text()
 
 setup(
     name="timewheel-scheduler",
-    version="0.2.0",
+    version="0.3.0",
     description="Async crontab like scheduler",
     long_description=README,
     long_description_content_type="text/markdown",
     author="Fausto Alonso",
-    author_email="fausto.alonso@captalys.com.br",
+    author_email="falonso@gmail.com",
     license="MIT",
     packages=find_packages(include=["timewheel"]),
     include_package_data=True

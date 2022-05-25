@@ -10,12 +10,13 @@ from typing import Callable, List, Union
 
 # This regular expression is used to validate the crontab expression
 # passed to the constructor.
-EXPRESSION_VALIDATOR_REGEXP = re.compile(r"((([\d*]+|[\d*]/\d),?)+ ?){5}")
+EXPRESSION_VALIDATOR_REGEXP = re.compile(r"((([\d*]+|[\d*]/\d|\d-\d),?)+ ?){5}")
 EXPRESSION_SEPARATOR = " "
 EXPECTED_TOKENS = 5
 ALL_TOKEN = "*"
 NTH_TOKEN = "/"
 MULTI_TOKEN = ","
+RANGE_TOKEN = "-"
 
 
 @dataclass
@@ -199,6 +200,8 @@ def parse_expression_token(token: str,
             generated_tokens.extend(parse_nth_token(extracted_token,
                                                     start_value,
                                                     max_value))
+        elif RANGE_TOKEN in extracted_token:
+            generated_tokens.extend(parse_range_token(extracted_token, start_value, max_value))
         else:
             extracted_token = int(extracted_token)
             if extracted_token > max_value:
@@ -207,12 +210,41 @@ def parse_expression_token(token: str,
                                  f"field type.")
             generated_tokens.append(extracted_token)
 
-    return sorted(generated_tokens)
+    return sorted(set(generated_tokens))
+
+
+def parse_range_token(range_token: str,
+                      start_value: int,
+                      max_value: int) -> List[int]:
+    """
+    Parses a range expression into a range
+    of values between the start_value and
+    max_value
+
+    :param range_token: The token containing the range pattern X-Y
+    :param start_value: The minimal value for the token
+    :param max_value: The max value for the token
+    :return: A list containing the integers for the
+        specified range.
+    """
+    if range_token.count(RANGE_TOKEN) > 1:
+        raise ValueError(f"The range notation expects the pattern X-Y, but the "
+                         f"token is {range_token}")
+
+    x, y = map(int, range_token.split(RANGE_TOKEN))
+
+    if x > y:
+        raise ValueError(f"The initial value must be less or equal to the end value")
+
+    if x < start_value or y > max_value:
+        raise ValueError(f"The values for the range must be between {start_value} and {max_value}")
+
+    return list(range(x, y + 1))
 
 
 def parse_nth_token(nth_token: str,
                     start_value: int,
-                    max_value: int):
+                    max_value: int) -> List[int]:
     """
     Parses a nth token expression and generates
     the corresponding list of integers.

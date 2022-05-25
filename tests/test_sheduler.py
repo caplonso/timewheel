@@ -43,6 +43,26 @@ def test_create_schedule_with_multi_tokens():
     assert len(s.schedule_table.minutes) == 5
 
 
+def test_create_schedule_with_range_token():
+    s = Schedule(name='my-range-schedule',
+                 expression='* * * * 1-5',
+                 timezone='America/Sao_Paulo',
+                 job=print)
+
+    assert isinstance(s.schedule_table.weekdays, list)
+    assert len(s.schedule_table.weekdays) == 5
+
+
+def test_create_schedule_with_complex_expression():
+    s = Schedule(name='my-complex-schedule',
+                 expression="*/2 20 1 * 0,3-6",
+                 timezone='America/Sao_Paulo',
+                 job=print)
+
+    assert isinstance(s.schedule_table.minutes, list) and len(s.schedule_table.minutes) == 30
+    assert isinstance(s.schedule_table.weekdays, list) and len(s.schedule_table.weekdays) == 5
+
+
 def test_create_schedule_with_nth_token_having_value_over_the_max():
     expression = '*/100 * * * *'
     with pytest.raises(ValueError) as error:
@@ -205,3 +225,4 @@ async def test_run_coro_job_successfully(caplog):
 
         job.assert_called_once()
         assert "Running the schedule with the job" in caplog.text
+

@@ -1,3 +1,9 @@
+## v.0.3.0 - 2022-05-25
+
+**Added**
+
+ - Now is possible to use the range notation in expression tokens.
+
 ## v.0.2.0 - 2021-12-28
 
 **Added**
